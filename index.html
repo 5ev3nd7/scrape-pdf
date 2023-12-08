@@ -1,0 +1,96 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scrape PDF</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js" integrity="sha512-ml/QKfG3+Yes6TwOzQb7aCNtJF4PUyha6R3w8pSTo/VJSywl7ZreYvvtUso7fKevpsI+pYVVwnu82YO0q3V6eg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <style>
+    body {
+      font-family: Helvetica;
+    }
+    h1 {
+      width: 100%;
+      text-align: center;
+    }
+    .pdfwork, .afterupload {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      width: 100%;
+    }
+    .pdfwork * {
+      margin-top: 5px;
+    }
+    .afterupload {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Upload PDF</h1>
+  <div class="pdfwork">
+    <input type="file" class="selectpdf">
+    <button class="upload">Upload</button>
+    <div class="afterupload">
+      <textarea class="pdftext" rows="5" cols="75"></textarea>
+      <p class="selectedText"></p>
+    </div>
+  </div>
+
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+    
+    let pdfinput = document.querySelector(".selectpdf");
+    let upload = document.querySelector(".upload");
+    let afterupload = document.querySelector(".afterupload");
+    let pdftext = document.querySelector(".pdftext");
+    let selectedText = document.querySelector(".selectedText");
+    
+    upload.addEventListener('click', () => {
+      let file = pdfinput.files[0];
+      if (file != undefined && file.type == "application/pdf") {
+        let fr = new FileReader();
+        fr.readAsDataURL(file);
+        fr.onload = () => {
+          let res = fr.result;
+          extractText(res);
+        }
+      } else {
+        alert("Select a valid PDF file");
+      }
+    });
+    
+    let alltext = [];
+    let selectedTxt;
+    
+    async function extractText(url) {
+      try {
+        let pdf = await pdfjsLib.getDocument(url).promise;
+        let page = await pdf.getPage(1);
+        let txt = await page.getTextContent();
+        let text = txt.items.map((s) => s.str).join("");
+        alltext.push(text);
+
+        selectedTxt = txt.items[5].str + `<br/>` + txt.items[6].str;
+        console.log(txt);
+        console.log(selectedTxt);
+
+        afterProcess();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+    
+    function afterProcess() {
+      pdftext.value = alltext[0];
+      selectedText.innerHTML = selectedTxt;
+      afterupload.style.display = "flex";
+    }
+  </script>
+</body>
+</html>
+
